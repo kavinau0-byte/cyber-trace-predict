@@ -20,9 +20,9 @@ NUM_COMPLAINTS = 500
 ATM_FILE = "data/real_atm_locations.csv"
 OUTPUT_FILE = "data/synthetic_complaints.csv"
 
-# Central Bengaluru bbox (same area as the ATM fetch)
-LAT_RANGE = (12.90, 13.05)
-LON_RANGE = (77.55, 77.70)
+# Greater Bengaluru bbox — matches the widened ATM dataset
+LAT_RANGE = (12.80, 13.10)
+LON_RANGE = (77.50, 77.75)
 
 BANKS = ["SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Bank of Baroda",
          "Punjab National Bank", "Kotak Mahindra Bank", "Canara Bank"]
