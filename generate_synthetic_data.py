@@ -28,19 +28,48 @@ BANKS = ["SBI", "HDFC Bank", "ICICI Bank", "Axis Bank", "Bank of Baroda",
          "Punjab National Bank", "Kotak Mahindra Bank", "Canara Bank"]
 
 FRAUD_TYPES = {
-    "OTP Phishing": "I received a call from someone claiming to be a {bank} representative. "
-                     "They asked me to share the OTP for a 'card upgrade' and my account was "
-                     "debited immediately after.",
-    "Fake Loan App": "I applied for a quick personal loan through an app I found online. "
-                      "After paying a 'processing fee' the app disappeared and my money is gone.",
-    "UPI QR Scam": "Someone posing as a buyer on an online marketplace asked me to scan a QR code "
-                    "to 'receive' payment. Instead, money was deducted from my {bank} account.",
-    "Job Fraud": "I was offered a work-from-home job and asked to pay a 'registration fee' "
-                 "via UPI. The recruiter stopped responding after I paid.",
-    "KYC Update Scam": "I got a message saying my {bank} KYC would expire unless I updated it "
-                        "via a link. After entering my details, money was withdrawn from my account.",
-    "Investment Fraud": "I invested in a trading scheme promoted on social media that promised "
-                         "high returns. The platform is no longer accessible and I've lost my money.",
+    "OTP Phishing": [
+        "I received a call from someone claiming to be a {bank} representative. They asked me to share the OTP for a 'card upgrade' and my account was debited immediately after.",
+        "A person pretending to be from {bank} called me and said my card needed verification. I shared the OTP they sent and ₹8,500 vanished from my account within minutes.",
+        "Someone fraudulently called me posing as {bank} support and convinced me to reveal my OTP. Right after that, money was deducted from my account without my knowledge.",
+        "I got a call from a number that appeared to be {bank}. They said there was suspicious activity on my card and asked for the OTP to block it. Instead, ₹12,000 was stolen.",
+        "A fraudster called claiming to be a {bank} agent and asked for my card OTP to process a refund. After sharing it, I noticed unauthorized transactions on my account.",
+    ],
+    "Fake Loan App": [
+        "I applied for a quick personal loan through an app I found online. After paying a 'processing fee' the app disappeared and my money is gone.",
+        "I downloaded a loan app that promised instant approval. They charged me a 'verification deposit' of ₹2,000 and then the app stopped opening entirely.",
+        "I found a loan app on social media offering low-interest personal loans. After paying the required 'stamp duty fee', the app vanished from my phone and I couldn't reach anyone.",
+        "An online ad led me to a loan app that asked for an upfront 'insurance charge'. I paid it but never received the loan and the company stopped responding to calls.",
+        "I applied for emergency funds through a loan app. They kept asking for more fees — processing, GST, document verification — each time promising the loan was 'almost disbursed'.",
+    ],
+    "UPI QR Scam": [
+        "Someone posing as a buyer on an online marketplace asked me to scan a QR code to 'receive' payment. Instead, money was deducted from my {bank} account.",
+        "A buyer on an e-commerce platform sent me a QR code saying I needed to scan it to get paid. When I scanned it, ₹5,500 was debited from my {bank} account instead.",
+        "On an online selling platform, a buyer asked me to scan their QR code to complete the transaction. The moment I scanned it, money was pulled from my {bank} wallet.",
+        "A person on a classifieds site said they wanted to buy my item and sent a QR code for 'payment verification'. Scanning it caused an unauthorized debit from my {bank} account.",
+        "I was selling something online and the buyer insisted I scan a QR code to receive funds. I later realized the QR was set up to deduct money, not add it, from my {bank} account.",
+    ],
+    "Job Fraud": [
+        "I was offered a work-from-home job and asked to pay a 'registration fee' via UPI. The recruiter stopped responding after I paid.",
+        "A company contacted me on WhatsApp offering a data-entry job. They asked for a 'training材料 fee' of ₹3,000 upfront. After I paid, the number became unreachable.",
+        "I applied for a remote job and was hired immediately without an interview. They asked me to pay for a 'background check' via UPI. Once I paid, all communication stopped.",
+        "Someone offered me a part-time job posting ads online. They said I needed to pay a 'security deposit' before starting. After transferring the money, they blocked me.",
+        "I was promised a freelance project and asked to pay a 'tool access fee' to begin. The company's website and contact details disappeared the next day.",
+    ],
+    "KYC Update Scam": [
+        "I got a message saying my {bank} KYC would expire unless I updated it via a link. After entering my details, money was withdrawn from my account.",
+        "A text message warned that my {bank} account would be frozen if I didn't re-verify my KYC through the provided link. After submitting my information, funds were stolen.",
+        "I received a短信 from someone claiming to be {bank} saying my KYC was outdated. The link took me to a fake portal where I entered my Aadhaar and PAN. Later, ₹9,800 was missing.",
+        "An SMS stated my {bank} KYC was expiring and I needed to click a link to update it. I entered my card details on the site and noticed unauthorized debits within hours.",
+        "A fraudster sent me a message from a {bank}-looking number about KYC renewal. I followed the link and filled in my details. Soon after, transactions appeared that I never made.",
+    ],
+    "Investment Fraud": [
+        "I invested in a trading scheme promoted on social media that promised high returns. The platform is no longer accessible and I've lost my money.",
+        "A Telegram group管理员 guided me to a crypto trading platform that showed fake profits. When I tried to withdraw, they asked for more 'tax' payments. I've lost ₹45,000.",
+        "I was added to a WhatsApp group that promoted a guaranteed-return investment plan. After investing ₹20,000 the group admin blocked me and the website shut down.",
+        "An Instagram ad for a stock-trading course led me to a platform where I deposited money. The dashboard showed growing returns but when I tried to cash out, my account was frozen.",
+        "A person on LinkedIn convinced me to invest in a 'low-risk' forex scheme. The platform initially let me withdraw small amounts, but after a large deposit, it became unreachable.",
+    ],
 }
 
 
@@ -109,7 +138,7 @@ def generate_complaint(complaint_id, atms):
 
     fraud_type = random.choice(list(FRAUD_TYPES.keys()))
     bank = random.choice(BANKS)
-    complaint_text = FRAUD_TYPES[fraud_type].format(bank=bank)
+    complaint_text = random.choice(FRAUD_TYPES[fraud_type]).format(bank=bank)
 
     incident_time = fake.date_time_between(start_date="-30d", end_date="now")
     # victims usually report within a few hours to ~2 days
