@@ -14,11 +14,20 @@ from faker import Faker
 
 fake = Faker("en_IN")
 random.seed(42)  # reproducible dataset — remove this line if you want fresh data each run
+Faker.seed(42)
 
 # ---------- Config ----------
 NUM_COMPLAINTS = 500
 ATM_FILE = "data/real_atm_locations.csv"
 OUTPUT_FILE = "data/synthetic_complaints.csv"
+
+# Mule reuse & noise pools
+NUM_SHARED_MULES = 50
+SHARED_MULE_POOL = [f"MULE-{fake.bothify('??######').upper()}" for _ in range(NUM_SHARED_MULES)]
+MULE_REUSE_PROBABILITY = 0.65
+
+NUM_NOISE_NODES = 30
+SHARED_NOISE_POOL = [f"NOISE-{fake.bothify('??######').upper()}" for _ in range(NUM_NOISE_NODES)]
 
 # Greater Bengaluru bbox — matches the widened ATM dataset
 LAT_RANGE = (12.80, 13.10)
@@ -51,7 +60,7 @@ FRAUD_TYPES = {
     ],
     "Job Fraud": [
         "I was offered a work-from-home job and asked to pay a 'registration fee' via UPI. The recruiter stopped responding after I paid.",
-        "A company contacted me on WhatsApp offering a data-entry job. They asked for a 'training材料 fee' of ₹3,000 upfront. After I paid, the number became unreachable.",
+        "A company contacted me on WhatsApp offering a data-entry job. They asked for a 'training fee' of ₹3,000 upfront. After I paid, the number became unreachable.",
         "I applied for a remote job and was hired immediately without an interview. They asked me to pay for a 'background check' via UPI. Once I paid, all communication stopped.",
         "Someone offered me a part-time job posting ads online. They said I needed to pay a 'security deposit' before starting. After transferring the money, they blocked me.",
         "I was promised a freelance project and asked to pay a 'tool access fee' to begin. The company's website and contact details disappeared the next day.",
@@ -59,13 +68,13 @@ FRAUD_TYPES = {
     "KYC Update Scam": [
         "I got a message saying my {bank} KYC would expire unless I updated it via a link. After entering my details, money was withdrawn from my account.",
         "A text message warned that my {bank} account would be frozen if I didn't re-verify my KYC through the provided link. After submitting my information, funds were stolen.",
-        "I received a短信 from someone claiming to be {bank} saying my KYC was outdated. The link took me to a fake portal where I entered my Aadhaar and PAN. Later, ₹9,800 was missing.",
+        "I received a message from someone claiming to be {bank} saying my KYC was outdated. The link took me to a fake portal where I entered my Aadhaar and PAN. Later, ₹9,800 was missing.",
         "An SMS stated my {bank} KYC was expiring and I needed to click a link to update it. I entered my card details on the site and noticed unauthorized debits within hours.",
         "A fraudster sent me a message from a {bank}-looking number about KYC renewal. I followed the link and filled in my details. Soon after, transactions appeared that I never made.",
     ],
     "Investment Fraud": [
         "I invested in a trading scheme promoted on social media that promised high returns. The platform is no longer accessible and I've lost my money.",
-        "A Telegram group管理员 guided me to a crypto trading platform that showed fake profits. When I tried to withdraw, they asked for more 'tax' payments. I've lost ₹45,000.",
+        "A Telegram group admin guided me to a crypto trading platform that showed fake profits. When I tried to withdraw, they asked for more 'tax' payments. I've lost ₹45,000.",
         "I was added to a WhatsApp group that promoted a guaranteed-return investment plan. After investing ₹20,000 the group admin blocked me and the website shut down.",
         "An Instagram ad for a stock-trading course led me to a platform where I deposited money. The dashboard showed growing returns but when I tried to cash out, my account was frozen.",
         "A person on LinkedIn convinced me to invest in a 'low-risk' forex scheme. The platform initially let me withdraw small amounts, but after a large deposit, it became unreachable.",
@@ -100,15 +109,12 @@ def load_atms():
 
 
 def pick_withdrawal_atm(victim_lat, victim_lon, atms):
-    """Weighted pick favoring ATMs roughly 2-15km away (realistic mule cash-out range),
-    peaking around 5-8km — not too close (traceable), not too far (impractical)."""
     weighted = []
     for atm in atms:
         d = haversine_km(victim_lat, victim_lon, atm["lat"], atm["lon"])
         if d < 0.5:
             weight = 0.05
         else:
-            # peak around 6km, decays smoothly on both sides
             weight = math.exp(-((d - 6) ** 2) / (2 * 5 ** 2))
         weighted.append((atm, weight, d))
 
@@ -124,12 +130,27 @@ def pick_withdrawal_atm(victim_lat, victim_lon, atms):
 
 def generate_mule_chain():
     hops = random.randint(2, 4)
-    return [f"MULE-{fake.bothify('??######').upper()}" for _ in range(hops)]
+    chain = []
+    for _ in range(hops):
+        if random.random() < MULE_REUSE_PROBABILITY:
+            node = random.choice(SHARED_MULE_POOL)
+        else:
+            node = f"MULE-{fake.bothify('??######').upper()}"
+        while chain and node == chain[-1]:
+            node = random.choice(SHARED_MULE_POOL)
+        chain.append(node)
+    return chain
+
+
+def generate_noise_nodes():
+    # ~15% chance of a complaint having a dead-end noise node receiving a transaction
+    if random.random() < 0.15:
+        return [random.choice(SHARED_NOISE_POOL)]
+    return []
 
 
 def random_amount():
-    # log-normal-ish distribution: mostly mid-range, occasional big losses
-    return round(random.lognormvariate(10, 0.9), -2)  # rounds to nearest 100
+    return round(random.lognormvariate(10, 0.9), -2)
 
 
 def generate_complaint(complaint_id, atms):
@@ -141,16 +162,15 @@ def generate_complaint(complaint_id, atms):
     complaint_text = random.choice(FRAUD_TYPES[fraud_type]).format(bank=bank)
 
     incident_time = fake.date_time_between(start_date="-30d", end_date="now")
-    # victims usually report within a few hours to ~2 days
     report_delay_hours = random.uniform(0.5, 48)
     complaint_time = incident_time + timedelta(hours=report_delay_hours)
 
-    # mule withdrawal happens 6-48 hours after the incident
     withdrawal_delay_hours = random.uniform(6, 48)
     withdrawal_time = incident_time + timedelta(hours=withdrawal_delay_hours)
 
     atm, distance_km = pick_withdrawal_atm(victim_lat, victim_lon, atms)
     mule_chain = generate_mule_chain()
+    noise_nodes = generate_noise_nodes()
     amount = min(random_amount(), 500000)
     amount = max(amount, 2000)
 
@@ -165,6 +185,7 @@ def generate_complaint(complaint_id, atms):
         "incident_time": incident_time.isoformat(),
         "complaint_time": complaint_time.isoformat(),
         "mule_chain": json.dumps(mule_chain),
+        "noise_nodes": json.dumps(noise_nodes),
         "withdrawal_atm_id": atm["atm_id"],
         "withdrawal_atm_name": atm["name"],
         "withdrawal_lat": atm["lat"],
