@@ -1,0 +1,25 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "ComplaintRecord",
+  "description": "Contract for a single fraud complaint record. Field names/types must match generate_synthetic_data.py exactly, since this is what Person A's pipeline produces and what Person B's backend ingests.",
+  "type": "object",
+  "required": ["complaint_id", "victim_lat", "victim_lon", "fraud_type", "bank", "amount_inr", "complaint_text"],
+  "properties": {
+    "complaint_id":   { "type": "string", "example": "CMP00001" },
+    "victim_lat":     { "type": "number" },
+    "victim_lon":     { "type": "number" },
+    "fraud_type":     { "type": "string", "example": "otp_fraud" },
+    "bank":           { "type": "string", "example": "HDFC" },
+    "amount_inr":     { "type": "number" },
+    "complaint_text": { "type": "string" },
+    "incident_time":  { "type": "string", "format": "date-time" },
+    "complaint_time": { "type": "string", "format": "date-time" },
+    "mule_chain":     { "type": "array", "items": { "type": "string" } },
+    "withdrawal_atm_id":   { "type": ["string", "null"] },
+    "withdrawal_atm_name": { "type": ["string", "null"] },
+    "withdrawal_lat":      { "type": ["number", "null"] },
+    "withdrawal_lon":      { "type": ["number", "null"] },
+    "withdrawal_time":     { "type": ["string", "null"], "format": "date-time" },
+    "victim_to_withdrawal_km": { "type": ["number", "null"] }
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PredictionResult",
+  "description": "Contract for Person A's NLP+GNN model output (Stage 2-3). Person B's backend depends on this exact shape via mock_ml.py until the real model is wired in at Stage 6. If Person A changes this shape, both sides must update together.",
+  "type": "object",
+  "required": ["complaint_id", "predicted_zones", "flagged_mule_accounts"],
+  "properties": {
+    "complaint_id": { "type": "string", "example": "CMP00001" },
+    "predicted_zones": {
+      "type": "array",
+      "description": "Ranked list of likely cash-withdrawal zones, highest confidence first.",
+      "items": {
+        "type": "object",
+        "required": ["lat", "lon", "confidence", "radius_m"],
+        "properties": {
+          "lat":        { "type": "number" },
+          "lon":        { "type": "number" },
+          "confidence": { "type": "number", "minimum": 0, "maximum": 1 },
+          "radius_m":   { "type": "number", "description": "Hotspot radius in meters" }
+        }
+      }
+    },
+    "flagged_mule_accounts": {
+      "type": "array",
+      "items": { "type": "string" },
+      "description": "Mule account IDs flagged by the GNN link-prediction model as high-risk."
+    }
+  }
+}

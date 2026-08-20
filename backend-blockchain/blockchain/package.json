@@ -1,0 +1,11 @@
+{
+  "name": "cybertrace-audit-contract",
+  "version": "1.0.0",
+  "description": "Solidity compile step for the CyberTrace Predict audit trail contract",
+  "scripts": {
+    "compile": "node compile.js"
+  },
+  "dependencies": {
+    "solc": "0.8.20"
+  }
+}
