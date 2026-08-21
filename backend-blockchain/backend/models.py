@@ -33,6 +33,8 @@ class PredictedZone(BaseModel):
     lon: float
     confidence: float
     radius_m: float
+    atm_id: Optional[str] = None
+    name: Optional[str] = None
 
 
 class PredictionResult(BaseModel):

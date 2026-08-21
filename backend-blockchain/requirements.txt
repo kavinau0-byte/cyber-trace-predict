@@ -6,3 +6,12 @@ py-evm==0.12.1b1
 sqlmodel==0.0.39
 pydantic==2.13.4
 httpx==0.28.1
+
+# --- Stage 6: real_ml.py pipeline deps (versions as in the shared root venv) ---
+numpy==2.5.2
+scikit-learn==1.9.0
+joblib==1.5.3
+spacy==3.8.13
+# spaCy model is not on PyPI; wheel URL pins en_core_web_sm 3.8.0.
+# Equivalent alternative: python -m spacy download en_core_web_sm
+https://github.com/explosion/spacy-models/releases/download/en_core_web_sm-3.8.0/en_core_web_sm-3.8.0-py3-none-any.whl

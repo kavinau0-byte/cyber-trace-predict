@@ -21,7 +21,7 @@ from sqlmodel import Session
 from models import ComplaintIn, PredictionResult, AuditEntryOut, ComplaintResponse
 from database import engine, init_db, save_complaint, save_prediction, Complaint, Prediction
 from blockchain_client import audit_chain
-import mock_ml
+import real_ml
 import json
 
 
@@ -46,9 +46,13 @@ def receive_complaint(complaint: ComplaintIn):
     )
     tx_hashes.append(tx1)
 
-    # --- Person A's real model plugs in here at Stage 6 ---
-    prediction: PredictionResult = mock_ml.predict(
-        complaint.complaint_id, complaint.victim_lat, complaint.victim_lon
+    # --- Person A's real model (Stage 6) ---
+    prediction: PredictionResult = real_ml.predict(
+        complaint.complaint_id,
+        complaint.victim_lat,
+        complaint.victim_lon,
+        complaint.complaint_text,
+        complaint.mule_chain,
     )
 
     with Session(engine) as session:
